@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Script Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: #495057;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: #667eea;
+        }
+        
+        .upload-area {
+            border: 2px dashed #adb5bd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8faff;
+        }
+        
+        .upload-area i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .time-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .time-option {
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .time-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .time-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 160px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .console {
+            background: #1a1a1a;
+            color: #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            height: 300px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        
+        .console-line {
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+        
+        .console-time {
+            color: #888;
+            margin-right: 10px;
+        }
+        
+        .console-error {
+            color: #ff6b6b;
+        }
+        
+        .console-info {
+            color: #4ecdc4;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-idle {
+            background: #6c757d;
+            color: #6c757d;
+        }
+        
+        .status-running {
+            background: #28a745;
+            color: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .time-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Python Script Runner</h1>
+            <p>Upload and execute Python scripts with timed execution</p>
+        </div>
+        
+        <div class="content">
+            <!-- Upload Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span>📁</span>
+                    <span>Upload Python Script</span>
+                </div>
+                <div class="upload-area" id="uploadArea">
+                    <div>📁</div>
+                    <h3>Click to upload Python file</h3>
+                    <p>Only .py files accepted</p>
+                    <input type="file" id="fileInput" class="file-input" accept=".py">
+                </div>
+                <div class="file-info" id="fileInfo">
+                    Selected file: <span id="fileName"></span>
+                    <span id="fileSize"></span>
+                </div>
+            </div>
+            
+            <!-- Time Selection -->
+            <div class="section">
+                <div class="section-title">
+                    <span>⏰</span>
+                    <span>Execution Time</span>
+                </div>
+                <div class="time-options" id="timeOptions">
+                    <div class="time-option" data-hours="1">1 Hour</div>
+                    <div class="time-option" data-hours="6">6 Hours</div>
+                    <div class="time-option" data-hours="12">12 Hours</div>
+                    <div class="time-option" data-hours="24">1 Day</div>
+                    <div class="time-option" data-hours="48">2 Days</div>
+                    <div class="time-option" data-hours="72">3 Days</div>
+                </div>
+            </div>
+            
+            <!-- Status & Controls -->
+            <div class="section">
+                <div class="section-title">
+                    <span>⚡</span>
+                    <span>Script Control</span>
+                    <div class="status-indicator">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">Idle</span>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" id="runBtn" disabled>
+                        <span>▶️</span>
+                        Run Script
+                    </button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>
+                        <span>⏹️</span>
+                        Stop Script
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Console Output -->
+            <div class="section">
+                <div class="section-title">
+                    <span>📋</span>
+                    <span>Live Console Output</span>
+                    <span style="margin-left: auto; font-size: 14px; color: #6c757d;">
+                        Auto-refresh every 2 seconds
+                    </span>
+                </div>
+                <div class="console" id="console">
+                    <div class="console-line console-info">
+                        <span class="console-time">[System]</span>
+                        Ready to execute scripts...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedFile = null;
+        let selectedHours = 1;
+        let currentScriptId = null;
+        let refreshInterval = null;
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const timeOptions = document.querySelectorAll('.time-option');
+        const runBtn = document.getElementById('runBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const consoleOutput = document.getElementById('console');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        // Upload area click handler
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectedFile = e.target.files[0];
+                
+                // Validate file type
+                if (!selectedFile.name.endsWith('.py')) {
+                    addConsoleLog('Error: Only .py files are allowed', 'error');
+                    selectedFile = null;
+                    fileInput.value = '';
+                    return;
+                }
+                
+                // Show file info
+                fileName.textContent = selectedFile.name;
+                fileSize.textContent = ` (${formatFileSize(selectedFile.size)})`;
+                fileInfo.style.display = 'block';
+                
+                addConsoleLog(`Selected file: ${selectedFile.name}`, 'info');
+                checkReadyState();
+            }
+        });
+
+        // Time selection handler
+        timeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove selected class from all options
+                timeOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selected class to clicked option
+                option.classList.add('selected');
+                
+                // Get hours from data attribute
+                selectedHours = parseInt(option.getAttribute('data-hours'));
+                
+                addConsoleLog(`Execution time set to: ${option.textContent}`, 'info');
+                checkReadyState();
+            });
+        });
+
+        // Run button handler
+        runBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                addConsoleLog('Please select a Python file first', 'error');
+                return;
+            }
+            
+            try {
+                addConsoleLog('Uploading and starting script...', 'info');
+                
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('hours', selectedHours);
+                
+                // Upload and start script
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentScriptId = result.script_id;
+                    addConsoleLog(`Script started with ID: ${currentScriptId}`, 'info');
+                    addConsoleLog(`Will run for ${selectedHours} hour(s)`, 'info');
+                    
+                    updateStatus('running');
+                    runBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    
+                    // Start refreshing logs
+                    startLogRefresh();
+                } else {
+                    addConsoleLog(`Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addConsoleLog(`Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Stop button handler
+        stopBtn.addEventListener('click', async () => {
+            if (!currentScriptId) {
+                addConsoleLog('No script is currently running', 'error');
+                return;
+            }
+            
+            try {
+                addConsoleLog('Stopping script...', 'info');
+                
+                const response = await fetch('/api/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ script_id: currentScriptId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addConsoleLog('Script stopped successfully', 'info');
+                    
+                    updateStatus('idle');
+                    runBtn.disabled = false;
+                    stopBtn.disabled = true;
+                    
+                    // Stop refreshing logs
+                    stopLogRefresh();
+                } else {
+                    addConsoleLog(`Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addConsoleLog(`Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Check if ready to run
+        function checkReadyState() {
+            if (selectedFile && selectedHours > 0) {
+                runBtn.disabled = false;
+            } else {
+                runBtn.disabled = true;
+            }
+        }
+
+        // Add log to console
+        function addConsoleLog(message, type = 'normal') {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.innerHTML = `<span class="console-time">[${timeString}]</span> ${message}`;
+            
+            consoleOutput.appendChild(line);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Update status indicator
+        function updateStatus(status) {
+            statusDot.className = 'status-dot';
+            statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            if (status === 'running') {
+                statusDot.classList.add('status-running');
+            } else {
+                statusDot.classList.add('status-idle');
+            }
+        }
+
+        // Start refreshing logs
+        function startLogRefresh() {
+            // Clear existing interval
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            
+            // Fetch logs immediately
+            fetchLogs();
+            
+            // Set up interval for refreshing logs
+            refreshInterval = setInterval(fetchLogs, 2000);
+        }
+
+        // Stop refreshing logs
+        function stopLogRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // Fetch logs from server
+        async function fetchLogs() {
+            if (!currentScriptId) return;
+            
+            try {
+                const response = await fetch(`/api/logs?script_id=${currentScriptId}`);
+                const result = await response.json();
+                
+                if (result.success && result.logs) {
+                    // Clear and update console (in real app, you'd append new logs)
+                    // For simplicity, we'll just show the last 50 lines
+                    const logs = result.logs.split('\n').slice(-50);
+                    
+                    // Clear console
+                    consoleOutput.innerHTML = '';
+                    
+                    // Add all logs
+                    logs.forEach(log => {
+                        if (log.trim()) {
+                            const line = document.createElement('div');
+                            line.className = 'console-line';
+                            line.textContent = log;
+                            consoleOutput.appendChild(line);
+                        }
+                    });
+                    
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
+                }
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+            }
+        }
+
+        // Initialize
+        function init() {
+            // Select default time (1 hour)
+            timeOptions[0].classList.add('selected');
+            
+            // Update status
+            updateStatus('idle');
+            
+            addConsoleLog('System initialized', 'info');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
